@@ -7,8 +7,24 @@ var restify = require('restify'),
 	port = process.env.PORT || 9001;
 
 // <Endpoint Modules>
-var auth = require('./modules/auth');
+var auth = require('./endpoints/auth');
 // </Endpoint Modules>
+
+// <Chats>
+var TwitchChat = require('./modules/twitch/chat');
+var TwitchController = require('./modules/twitch/controller');
+TwitchChat = new TwitchChat({
+	username: process.env.TWITCH_CHAT_USERNAME,
+	auth: process.env.TWITCH_CHAT_AUTH,
+	channels: [ "ModestTim" ]
+});
+TwitchChat.connect();
+
+TwitchChat.on("message", TwitchController.check)
+TwitchChat.on("sub", console.log)
+TwitchChat.on("resub", console.log)
+TwitchChat.on("subgift", console.log)
+// </Chats>
 
 bluebird.promisifyAll(Redis.RedisClient.prototype);
 bluebird.promisifyAll(Redis.Multi.prototype);

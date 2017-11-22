@@ -5,7 +5,8 @@ export default function () {
 			auth: {
 				twitch: "/auth/twitch",
 				invalidate: "/auth/token"
-			}
+			},
+			me: "/me"
 		}
 	};
 

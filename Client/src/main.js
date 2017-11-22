@@ -13,6 +13,7 @@ Vue.use(Vuex)
 const store = new Vuex.Store({
 	state: {
 		Authorization: window.helpers.cookies.get("Authorization"),
+		User: null,
 		Searchable: false
 	},
 	mutations: {
@@ -21,6 +22,9 @@ const store = new Vuex.Store({
 		},
 		Searchable (state, option) {
 			state.Searchable = option;
+		},
+		User (state, data) {
+			state.User = data;
 		}
 	},
 	actions: {
@@ -29,6 +33,9 @@ const store = new Vuex.Store({
 		},
 		Searchable (context, option) {
 			context.commit('Searchable', option);
+		},
+		User (context, data) {
+			context.commit('User', data);
 		}
 	}
 })

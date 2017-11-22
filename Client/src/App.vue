@@ -5,21 +5,21 @@
 				<button v-on:click="login">Login with Twitch</button>
 			</div>
 		</div>
-		<div data-mode="dashboard" v-if="authorization" v-on:click="toogleAccount">
+		<div data-mode="dashboard" v-if="authorization && user" v-on:click="toogleAccount">
 			<div class="header">
 				<div class="banner">
 					<router-link tag="li" to="/" class="logo no-select">
 						<img src="./assets/img/logo.png" alt="">
 						<h1>Modest Tools</h1>
 					</router-link>
-					<div class="search" v-bind:class="searchable">
+					<div class="search" v-bind:class="{ searchable }">
 						<i class="fa fa-search"></i>
 						<input type="text" name="text" placeholder="Search for a user" />
 					</div>
 					<div class="right no-select">
 						<div class="account-container">
-							<img src="https://static-cdn.jtvnw.net/jtv_user_pictures/374fae7180372fe0-profile_image-300x300.png">
-							<p>ModestLand</p>
+							<img :src="user.profile_image_url">
+							<p v-text="user.display_name"></p>
 							<i class="fa fa-caret-down"></i>
 						</div>
 
@@ -59,6 +59,13 @@
 				<router-view></router-view>
 			</div>
 		</div>
+		<div data-mode="loading" v-if="user === null && authorization">
+			<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="100px" height="100px" viewBox="0 0 50 50" style="enable-background:new 0 0 50 50;" xml:space="preserve">
+				<path fill="#000" d="M43.935,25.145c0-10.318-8.364-18.683-18.683-18.683c-10.318,0-18.683,8.365-18.683,18.683h4.068c0-8.071,6.543-14.615,14.615-14.615c8.072,0,14.615,6.543,14.615,14.615H43.935z">
+					<animateTransform attributeType="xml" attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="0.6s" repeatCount="indefinite" />
+				</path>
+			</svg>
+		</div>
 	</div>
 </template>
 
@@ -70,18 +77,14 @@ export default {
 			api: {
 				login: `${window.Settings.API}${window.Settings.Endpoints.auth.twitch}`,
 				logout: `${window.Settings.API}${window.Settings.Endpoints.auth.invalidate}`,
+				me: `${window.Settings.API}${window.Settings.Endpoints.me}`,
 			}
 		}
 	},
 	computed: {
-		authorization () {
-			return this.$store.state.Authorization
-		},
-		searchable () {
-			return {
-				searchable: this.$store.state.Searchable
-			}
-		}
+		authorization () { return this.$store.state.Authorization },
+		searchable () { return this.$store.state.Searchable },
+		user () { return this.$store.state.User }
 	},
 	created () { this.authCheck(); },
 	methods: {
@@ -107,6 +110,22 @@ export default {
 				this.$store.dispatch('Authorization', qs.authorization);
 				window.close();
 			}
+
+			this.me();
+		},
+		me: function () {
+			if (this.$store.state.User !== null && !this.$store.state.Authorization) return;
+			fetch(this.api.me, {
+				headers: new Headers({
+					Authorization: this.$store.state.Authorization
+				})
+			}).then((j) => {
+				return j.json();
+			}).then((data) => {
+				this.$store.dispatch('User', data.data);
+			}).catch((err) => {
+				console.error(err)
+			});
 		},
 		login: function () {
 			var auth = window.open(this.api.login, "", "width=600,height=700");
@@ -114,6 +133,7 @@ export default {
 				if(auth.closed) {
 					clearInterval(openerCheck);
 					this.$store.dispatch('Authorization', window.helpers.cookies.get("Authorization"));
+					this.me();
 				}
 			}, 500);
 		},
@@ -572,6 +592,18 @@ export default {
 					line-height: 45px;
 					color: #fff;
 				}
+			}
+		}
+	}
+	div[data-mode="loading"] {
+		width: 100%;
+
+		svg {
+			margin: 50px auto;
+			width: 100%;
+
+			path {
+				fill: $primaryColor;
 			}
 		}
 	}
